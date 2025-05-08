@@ -1,0 +1,64 @@
+
+# Solace Message Sender Application - Testing Notes
+
+## Changes Made
+
+1. Updated React and related dependencies to stable versions:
+   - React: 19.1.0 -> 18.2.0
+   - React DOM: 19.1.0 -> 18.2.0
+   - React types: 19.1.2 -> 18.2.0
+
+2. Updated development dependencies to stable versions:
+   - ESLint: 9.25.0 -> 8.56.0
+   - TypeScript: 5.8.3 -> 5.3.3
+   - Vite: 6.3.5 -> 5.0.10
+   - And other related plugins
+
+3. Fixed Solace SDK usage in server/index.js:
+   - Corrected the import and initialization of the Solace SDK
+   - Updated session creation, message creation, and destination creation to use the correct API
+
+## Testing Instructions
+
+1. Start the backend server:
+   ```bash
+   npm run server
+   ```
+   The server should start on port 5000.
+
+2. In a separate terminal, start the frontend:
+   ```bash
+   npm run dev
+   ```
+   The frontend should start on port 5173.
+
+3. Open a browser and navigate to http://localhost:5173
+
+4. Fill in the form with your Solace broker details:
+   - Broker URL (e.g., `ws://localhost:8000` or `wss://mr-connection-abcde.messaging.solace.cloud:443`)
+   - VPN Name (e.g., `default`)
+   - Username and Password
+   - Destination name (Queue or Topic)
+   - Message payload (text or JSON)
+
+5. Select whether the destination is a Queue or Topic
+
+6. Click "Send Message" and check for success or error messages
+
+## Troubleshooting
+
+- If you see "address already in use" errors, you may need to kill the existing process using the port:
+  ```bash
+  lsof -i :5000  # Find the process ID
+  kill -9 <PID>  # Kill the process
+  ```
+
+- If you encounter connection issues with the Solace broker, verify your broker details and ensure the broker is running and accessible.
+
+- For JSON payloads, ensure the JSON is properly formatted.
+
+## Local Solace Broker (Docker)
+
+michaelyoung@mac solace-poke % docker ps
+CONTAINER ID   IMAGE                           COMMAND               CREATED        STATUS        PORTS                                                                                                                                              NAMES
+5dcf2d9786b1   solace/solace-pubsub-standard   "/usr/sbin/boot.sh"   47 hours ago   Up 47 hours   0.0.0.0:1883->1883/tcp, 0.0.0.0:5672->5672/tcp, 0.0.0.0:8008->8008/tcp, 0.0.0.0:8080->8080/tcp, 0.0.0.0:9000->9000/tcp, 0.0.0.0:55554->55555/tcp   solace
