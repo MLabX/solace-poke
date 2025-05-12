@@ -7,6 +7,7 @@
 
 import express from 'express';
 import solaceService from '../solaceService.js';
+import config from '../config.js';
 import { ValidationError, SolaceConnectionError, SolaceMessageError } from '../errors.js';
 
 const router = express.Router();
@@ -43,7 +44,7 @@ router.post('/', async (req, res) => {
       password: req.body.password,
       destination: req.body.destination,
       payload: req.body.payload || req.body.message,  // Support both payload and message fields
-      isQueue: req.body.isQueue !== undefined ? req.body.isQueue : true // Default to queue if not specified
+      isQueue: req.body.isQueue !== undefined ? req.body.isQueue : config.solace.isQueue // Use configured default if not specified
     };
 
     // Use the solaceService to send the message

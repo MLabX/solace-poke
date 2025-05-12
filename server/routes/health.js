@@ -6,6 +6,7 @@
  */
 
 import express from 'express';
+import { actualPort } from '../index.js';
 
 const router = express.Router();
 
@@ -21,11 +22,9 @@ const router = express.Router();
  * @returns {string} timestamp - ISO timestamp of the request
  */
 router.get('/', (req, res) => {
-  const PORT = process.env.PORT || 5050;
-  
   res.status(200).json({
     status: 'ok',
-    port: PORT,
+    port: actualPort,
     timestamp: new Date().toISOString()
   });
 });

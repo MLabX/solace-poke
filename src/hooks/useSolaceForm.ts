@@ -4,41 +4,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { SolaceFormData, StatusMessage, SendMessageResponse } from '../types';
-
-/**
- * API URL from environment variables with fallback to localhost
- */
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050';
-
-/**
- * Default form values for the Solace message form
- */
-const DEFAULT_FORM_VALUES: SolaceFormData = {
-  brokerUrl: 'ws://localhost:8008',  // WebSocket URL for the Solace broker
-  vpnName: 'default',                // Message VPN name
-  username: 'admin',                 // Authentication username
-  password: 'admin',                 // Authentication password
-  destination: 'DEAL.IN',            // Queue or topic name
-  payload: `{
-    "airline": "ExampleAirline",
-    "region": "Ontario",
-    "requestId": 44334,
-    "flight": {
-        "flightModel": "boeing737",
-        "flightRoute": "international"
-    },
-    "items": [
-        {
-            "origin": "yow",
-            "destination": "ewr",
-            "status": "boarding"
-        }
-    ],
-    "totalPassengers": 300,
-    "lastUpdated": "2024-01-05T14:30:00"
-}`,                                  // Default JSON payload example
-  isQueue: true                      // Whether destination is a queue (true) or topic (false)
-};
+import config from '../config';
 
 /**
  * Hook for managing Solace message form
@@ -53,12 +19,12 @@ const DEFAULT_FORM_VALUES: SolaceFormData = {
  * @returns {Function} clearStatus - Function to clear the status message
  */
 export function useSolaceForm() {
-  // Form data state
-  const [formData, setFormData] = useState<SolaceFormData>(DEFAULT_FORM_VALUES);
-  
+  // Form data state - use default values from config
+  const [formData, setFormData] = useState<SolaceFormData>(config.form);
+
   // Status message state
   const [status, setStatus] = useState<StatusMessage | null>(null);
-  
+
   // Loading state
   const [isLoading, setIsLoading] = useState(false);
 
@@ -129,11 +95,14 @@ export function useSolaceForm() {
         }
       }
 
-      // Send the message to the server
-      const response = await axios.post<SendMessageResponse>(`${API_URL}/send-message`, {
-        ...formData,
-        payload: payloadToSend
-      });
+      // Send the message to the server using API URL and endpoint from config
+      const response = await axios.post<SendMessageResponse>(
+        `${config.api.url}${config.api.endpoints.sendMessage}`, 
+        {
+          ...formData,
+          payload: payloadToSend
+        }
+      );
 
       // Update status with success message from server
       setStatus({

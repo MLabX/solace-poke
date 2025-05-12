@@ -12,6 +12,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import config from './config.js';
 import healthRoutes from './routes/health.js';
 import sendMessageRoutes from './routes/sendMessage.js';
 
@@ -20,8 +21,12 @@ dotenv.config();
 
 // Initialize Express application
 const app = express();
-// Set server port from environment variables or use default
-const PORT = process.env.PORT || 5050;
+// Get server port from configuration
+const PORT = config.server.port;
+
+// Store the actual port the server is running on
+// This will be updated when the server starts
+export let actualPort = PORT;
 
 /**
  * Middleware Configuration
@@ -34,17 +39,17 @@ const PORT = process.env.PORT || 5050;
  * Different settings are used for development vs. production environments
  */
 const corsOptions = {
-  // In production, use the CLIENT_ORIGIN env var or default to localhost
+  // In production, use the configured client origin
   // In development, allow requests from any origin
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.CLIENT_ORIGIN || 'http://localhost:5173'
+  origin: config.server.nodeEnv === 'production' 
+    ? config.server.clientOrigin
     : true,
-  // Only allow specific HTTP methods
-  methods: ['GET', 'POST', 'OPTIONS'],
-  // Only allow specific headers
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  // Only allow specific HTTP methods from configuration
+  methods: config.server.cors.methods,
+  // Only allow specific headers from configuration
+  allowedHeaders: config.server.cors.allowedHeaders,
   // Allow credentials (cookies, authorization headers) to be sent
-  credentials: true
+  credentials: config.server.cors.credentials
 };
 app.use(cors(corsOptions));
 
@@ -81,6 +86,8 @@ if (process.env.NODE_ENV !== 'test') {
       .on('listening', () => {
         // Server started successfully
         console.log(`Server running on port ${port}`);
+        // Update the actual port
+        actualPort = port;
       })
       .on('error', (err) => {
         if (err.code === 'EADDRINUSE') {

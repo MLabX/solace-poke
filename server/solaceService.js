@@ -6,6 +6,7 @@
  */
 import pkg from 'solclientjs';
 import validators from './validators.js';
+import config from './config.js';
 import { SolaceConnectionError, SolaceMessageError } from './errors.js';
 
 // Get Solace SDK
@@ -20,7 +21,10 @@ let isInitialized = false;
  */
 function ensureInitialized() {
   if (!isInitialized) {
-    solace.SolclientFactory.init({ profile: solace.SolclientFactoryProfiles.version10 });
+    // Use profile version from configuration
+    solace.SolclientFactory.init({ 
+      profile: solace.SolclientFactoryProfiles[config.solace.profileVersion] 
+    });
     isInitialized = true;
   }
 }
@@ -38,22 +42,23 @@ function ensureInitialized() {
  * @returns {Promise<Object>} - Result of the operation
  * @throws {Error} - If validation fails or if there's an error sending the message
  */
-export async function sendMessage(config) {
+export async function sendMessage(connectionConfig) {
   // Ensure Solace client is initialized
   ensureInitialized();
 
   // Validate input parameters
   try {
-    validators.validateSendMessageParams(config);
+    validators.validateSendMessageParams(connectionConfig);
   } catch (error) {
     // Rethrow validation errors with additional context
     throw error;
   }
 
-  // Set log level
-  solace.SolclientFactory.setLogLevel(solace.LogLevel.INFO);
+  // Set log level from configuration
+  solace.SolclientFactory.setLogLevel(solace.LogLevel[config.solace.logLevel]);
 
-  const { brokerUrl, vpnName, username, password, destination, payload, isQueue } = config;
+  // Extract parameters from the connectionConfig parameter
+  const { brokerUrl, vpnName, username, password, destination, payload, isQueue } = connectionConfig;
 
   // Create session properties
   const sessionProperties = {
@@ -83,8 +88,8 @@ export async function sendMessage(config) {
         session.on(solace.SessionEventCode.CONNECT_FAILED_ERROR, (error) => {
           console.error('Connection failed', error);
           reject(new SolaceConnectionError('Connection to Solace broker failed', {
-            brokerUrl: config.brokerUrl,
-            vpnName: config.vpnName,
+            brokerUrl: connectionConfig.brokerUrl,
+            vpnName: connectionConfig.vpnName,
             originalError: error
           }));
         });
@@ -111,12 +116,12 @@ export async function sendMessage(config) {
       // Set message payload
       message.setBinaryAttachment(typeof payload === 'object' ? JSON.stringify(payload) : payload);
 
-      // Set delivery mode to DIRECT as recommended
-      message.setDeliveryMode(solace.MessageDeliveryModeType.DIRECT);
+      // Set delivery mode from configuration
+      message.setDeliveryMode(solace.MessageDeliveryModeType[config.solace.deliveryMode]);
 
       // Set property only if the method exists
       if (typeof message.setProperty === 'function') {
-        message.setProperty('JMSXUserID', username);
+        message.setProperty(config.solace.userIdProperty, username);
       }
 
       // Send message
@@ -148,9 +153,9 @@ export async function sendMessage(config) {
 
     // Otherwise, wrap it in a SolaceMessageError
     throw new SolaceMessageError(`Failed to send message: ${error.message}`, {
-      brokerUrl: config.brokerUrl,
-      destination: config.destination,
-      isQueue: config.isQueue,
+      brokerUrl: connectionConfig.brokerUrl,
+      destination: connectionConfig.destination,
+      isQueue: connectionConfig.isQueue,
       originalError: error
     });
   }

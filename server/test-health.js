@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-// Get the API URL from environment variables or use the default
-const API_URL = process.env.VITE_API_URL || 'http://localhost:5050';
+// Get the port from environment variables or use the default
+const PORT = process.env.PORT || 5050;
+
+// Construct the API URL using the port
+const API_URL = process.env.VITE_API_URL || `http://localhost:${PORT}`;
 
 async function testHealthEndpoint() {
   try {

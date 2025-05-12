@@ -53,23 +53,52 @@ npm install
 
 ## Configuration
 
+The application uses a centralized configuration approach with sensible defaults that can be overridden by environment variables.
+
 ### Backend Configuration
 
-The backend server uses environment variables for configuration. You can modify the `.env` file in the `server` directory:
+The backend server configuration is centralized in `server/config.js`. This file defines default values for:
+
+- Server settings (port, CORS options)
+- Solace client settings (log level, profile version, delivery mode)
+
+You can override these defaults by setting environment variables in the `.env` file in the `server` directory:
 
 ```
+# Server configuration
 PORT=5050
+CLIENT_ORIGIN=http://localhost:5173
+NODE_ENV=development
+
+# Solace defaults (used when client doesn't provide values)
+SOLACE_LOG_LEVEL=INFO
+SOLACE_PROFILE_VERSION=version10
+SOLACE_DELIVERY_MODE=DIRECT
 ```
 
 ### Frontend Configuration
 
-The frontend uses environment variables for API URL configuration. Create or modify the `.env` file in the root directory:
+The frontend configuration is centralized in `src/config.ts`. This file defines default values for:
+
+- API URL and endpoints
+- Default form values for the Solace message form
+
+You can override these defaults by setting environment variables in the `.env` file in the root directory:
 
 ```
+# API configuration
 VITE_API_URL=http://localhost:5050
+
+# Default form values
+VITE_DEFAULT_BROKER_URL=ws://localhost:8008
+VITE_DEFAULT_VPN_NAME=default
+VITE_DEFAULT_USERNAME=admin
+VITE_DEFAULT_PASSWORD=admin
+VITE_DEFAULT_DESTINATION=DEAL.IN
+VITE_DEFAULT_IS_QUEUE=true
 ```
 
-This environment variable will be injected into the client bundle during build time.
+These environment variables will be injected into the client bundle during build time.
 
 ## Running the Application
 

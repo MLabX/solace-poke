@@ -4,11 +4,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ServerInfo } from '../types';
-
-/**
- * API URL from environment variables with fallback to localhost
- */
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+import config from '../config';
 
 /**
  * Hook for checking server health
@@ -33,8 +29,10 @@ export function useServerHealth() {
      */
     const checkServerHealth = async () => {
       try {
-        // Request server health information
-        const response = await axios.get<ServerInfo>(`${API_URL}/health`);
+        // Request server health information using API URL and endpoint from config
+        const response = await axios.get<ServerInfo>(
+          `${config.api.url}${config.api.endpoints.health}`
+        );
         // Update server info state with response data
         setServerInfo(response.data);
         // Clear any previous server errors

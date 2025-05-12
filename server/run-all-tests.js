@@ -19,7 +19,7 @@ async function runCommand(command) {
   }
 }
 
-// Function to start the server
+// Function to start the server and return the port it's running on
 function startServer() {
   console.log('Starting server...');
   const server = spawn('node', ['server/index.js'], {
@@ -27,31 +27,46 @@ function startServer() {
     detached: true
   });
 
-  // Capture server output
-  server.stdout.on('data', (data) => {
-    console.log(`Server output: ${data}`);
+  // Variable to store the port the server is running on
+  let serverPort = null;
+
+  // Promise to wait for server to start and capture the port
+  const portPromise = new Promise((resolve) => {
+    // Capture server output
+    server.stdout.on('data', (data) => {
+      const output = data.toString();
+      console.log(`Server output: ${output}`);
+
+      // Extract port from server output
+      const portMatch = output.match(/Server running on port (\d+)/);
+      if (portMatch && portMatch[1]) {
+        serverPort = portMatch[1];
+        resolve(serverPort);
+      }
+    });
   });
 
   server.stderr.on('data', (data) => {
     console.error(`Server error: ${data}`);
   });
 
-  // Return the server process
-  return server;
+  // Return both the server process and the promise for the port
+  return { server, portPromise };
 }
 
 // Function to run all tests
 async function runAllTests() {
   console.log('=== Running All Tests ===');
 
-  // Start the server
-  const server = startServer();
+  // Start the server and get the port promise
+  const { server, portPromise } = startServer();
 
-  // Wait for server to start
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  // Wait for server to start and get the port
+  const port = await portPromise;
+  console.log(`Server detected on port: ${port}`);
 
   console.log('\n=== Running Server-Side Tests ===');
-  const serverTestResult = await runCommand('NODE_OPTIONS=--experimental-vm-modules jest --forceExit');
+  const serverTestResult = await runCommand(`NODE_OPTIONS=--experimental-vm-modules PORT=${port} jest --forceExit`);
   console.log('Server-side test results:');
   console.log(serverTestResult.stdout);
   if (serverTestResult.stderr) {
@@ -60,7 +75,7 @@ async function runAllTests() {
   }
 
   console.log('\n=== Running Health Check Test ===');
-  const healthTestResult = await runCommand('node server/test-health.js');
+  const healthTestResult = await runCommand(`PORT=${port} node server/test-health.js`);
   console.log('Health check test results:');
   console.log(healthTestResult.stdout);
   if (healthTestResult.stderr) {
