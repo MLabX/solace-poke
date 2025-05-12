@@ -12,7 +12,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import solaceService from './solaceService.js';
+import healthRoutes from './routes/health.js';
+import sendMessageRoutes from './routes/sendMessage.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -55,72 +56,11 @@ app.options('*', cors());
 app.use(express.json());
 
 /**
- * Health check endpoint
- * Returns the server status, port, and current timestamp
- * Used by clients to verify server availability
- * 
- * @route GET /health
- * @returns {Object} 200 - Server status information
- * @returns {string} status - Always "ok" if server is running
- * @returns {number} port - The port the server is running on
- * @returns {string} timestamp - ISO timestamp of the request
+ * Register routes
+ * Mount the route modules at their respective endpoints
  */
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    port: PORT,
-    timestamp: new Date().toISOString()
-  });
-});
-
-/**
- * API endpoint to send a message to a Solace broker
- * Accepts connection parameters and message details, then uses solaceService to send the message
- * 
- * @route POST /send-message
- * @param {Object} req.body - The request body containing Solace connection and message parameters
- * @param {string} req.body.brokerUrl - URL of the Solace broker
- * @param {string} req.body.vpnName - VPN name (can also be provided as 'vpn')
- * @param {string} req.body.username - Username for authentication
- * @param {string} req.body.password - Password for authentication
- * @param {string} req.body.destination - Destination name (queue or topic)
- * @param {string|Object} req.body.payload - Message payload (can also be provided as 'message')
- * @param {boolean} [req.body.isQueue=true] - Whether the destination is a queue (true) or topic (false)
- * @returns {Object} 200 - Success response
- * @returns {boolean} success - Whether the operation was successful
- * @returns {string} message - Success message
- * @returns {Object} 500 - Error response
- * @returns {boolean} success - Always false for errors
- * @returns {string} message - Error message
- * @returns {string} error - Detailed error message
- */
-app.post('/send-message', async (req, res) => {
-  try {
-    // Normalize the request body to handle different field name formats
-    // This allows for flexibility in how clients can format their requests
-    const normalizedBody = {
-      brokerUrl: req.body.brokerUrl,
-      vpnName: req.body.vpnName || req.body.vpn,  // Support both vpnName and vpn fields
-      username: req.body.username,
-      password: req.body.password,
-      destination: req.body.destination,
-      payload: req.body.payload || req.body.message,  // Support both payload and message fields
-      isQueue: req.body.isQueue !== undefined ? req.body.isQueue : true // Default to queue if not specified
-    };
-
-    // Use the solaceService to send the message
-    const result = await solaceService.sendMessage(normalizedBody);
-    res.status(200).json(result);
-  } catch (error) {
-    // Log the error and return a standardized error response
-    console.error('Error in /send-message endpoint:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to send message', 
-      error: error.message 
-    });
-  }
-});
+app.use('/health', healthRoutes);
+app.use('/send-message', sendMessageRoutes);
 
 /**
  * Server startup logic

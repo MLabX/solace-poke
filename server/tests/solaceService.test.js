@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 import defaultConfig from './testConfig.js';
+import { SolaceConnectionError, SolaceMessageError, ValidationError } from '../errors.js';
 
 let solclientjs;
 let solaceService;
@@ -192,7 +193,7 @@ describe('solaceService', () => {
     });
 
     // Test 4: Handle connection failure
-    test('should throw an error when connection fails', async () => {
+    test('should throw a SolaceConnectionError when connection fails', async () => {
       // Arrange
       const config = {
         brokerUrl: 'ws://invalid-broker', // Using invalid broker URL to trigger connection failure
@@ -220,11 +221,22 @@ describe('solaceService', () => {
       solclientjs.SolclientFactory.createSession.mockImplementationOnce(() => mockSession);
 
       // Act & Assert
-      await expect(solaceService.sendMessage(config)).rejects.toThrow('Failed to send message: Connection to Solace broker failed');
+      try {
+        await solaceService.sendMessage(config);
+        // If we get here, the test should fail because an error should have been thrown
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        // Assert that the error is a SolaceConnectionError
+        expect(error).toBeInstanceOf(SolaceConnectionError);
+        // Assert that the error message is correct
+        expect(error.message).toBe('Connection to Solace broker failed');
+        // Assert that the error details contain the broker URL
+        expect(error.details).toHaveProperty('brokerUrl', 'ws://invalid-broker');
+      }
     });
 
     // Test 5: Validate required fields
-    test('should throw an error when required fields are missing', async () => {
+    test('should throw a ValidationError when required fields are missing', async () => {
       // Arrange - missing brokerUrl
       const config = {
         vpnName: defaultConfig.vpnName,
@@ -236,7 +248,16 @@ describe('solaceService', () => {
       };
 
       // Act & Assert
-      await expect(solaceService.sendMessage(config)).rejects.toThrow();
+      try {
+        await solaceService.sendMessage(config);
+        // If we get here, the test should fail because an error should have been thrown
+        fail('Expected an error to be thrown');
+      } catch (error) {
+        // Assert that the error is a ValidationError
+        expect(error).toBeInstanceOf(ValidationError);
+        // Assert that the error message is correct
+        expect(error.message).toBe("Parameter 'brokerUrl' is required and must be a string");
+      }
     });
   });
 });

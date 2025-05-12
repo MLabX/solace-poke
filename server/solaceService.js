@@ -1,9 +1,12 @@
 /**
  * Solace messaging service
  * Provides functions for sending messages to Solace brokers
+ * 
+ * @module solaceService
  */
 import pkg from 'solclientjs';
 import validators from './validators.js';
+import { SolaceConnectionError, SolaceMessageError } from './errors.js';
 
 // Get Solace SDK
 const solace = pkg;
@@ -40,9 +43,11 @@ export async function sendMessage(config) {
   ensureInitialized();
 
   // Validate input parameters
-  const validationResult = validators.validateSendMessageParams(config);
-  if (!validationResult.valid) {
-    throw new Error(`Validation error: ${validationResult.error}`);
+  try {
+    validators.validateSendMessageParams(config);
+  } catch (error) {
+    // Rethrow validation errors with additional context
+    throw error;
   }
 
   // Set log level
@@ -77,7 +82,11 @@ export async function sendMessage(config) {
         // Connection failure handler
         session.on(solace.SessionEventCode.CONNECT_FAILED_ERROR, (error) => {
           console.error('Connection failed', error);
-          reject(new Error('Connection to Solace broker failed'));
+          reject(new SolaceConnectionError('Connection to Solace broker failed', {
+            brokerUrl: config.brokerUrl,
+            vpnName: config.vpnName,
+            originalError: error
+          }));
         });
 
         // Start connection
@@ -131,7 +140,19 @@ export async function sendMessage(config) {
     }
   } catch (error) {
     console.error('Error sending message:', error);
-    throw new Error(`Failed to send message: ${error.message}`);
+
+    // If it's already one of our custom errors, just rethrow it
+    if (error.name === 'SolaceConnectionError' || error.name === 'SolaceMessageError' || error.name === 'ValidationError') {
+      throw error;
+    }
+
+    // Otherwise, wrap it in a SolaceMessageError
+    throw new SolaceMessageError(`Failed to send message: ${error.message}`, {
+      brokerUrl: config.brokerUrl,
+      destination: config.destination,
+      isQueue: config.isQueue,
+      originalError: error
+    });
   }
 }
 

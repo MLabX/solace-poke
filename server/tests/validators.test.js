@@ -1,9 +1,10 @@
 import { validateSendMessageParams } from '../validators.js';
+import { ValidationError } from '../errors.js';
 
 describe('validators', () => {
   describe('validateSendMessageParams', () => {
     // Test 1: Valid parameters
-    test('should return valid=true for valid parameters', () => {
+    test('should not throw for valid parameters', () => {
       // Arrange
       const params = {
         brokerUrl: 'ws://localhost:8000',
@@ -15,15 +16,12 @@ describe('validators', () => {
         isQueue: true
       };
 
-      // Act
-      const result = validateSendMessageParams(params);
-
-      // Assert
-      expect(result).toEqual({ valid: true });
+      // Act & Assert
+      expect(() => validateSendMessageParams(params)).not.toThrow();
     });
 
     // Test 2: Valid parameters with JSON payload
-    test('should return valid=true for valid parameters with JSON payload', () => {
+    test('should not throw for valid parameters with JSON payload', () => {
       // Arrange
       const params = {
         brokerUrl: 'ws://localhost:8000',
@@ -35,27 +33,22 @@ describe('validators', () => {
         isQueue: true
       };
 
-      // Act
-      const result = validateSendMessageParams(params);
-
-      // Assert
-      expect(result).toEqual({ valid: true });
+      // Act & Assert
+      expect(() => validateSendMessageParams(params)).not.toThrow();
     });
 
     // Test 3: Missing params object
-    test('should return valid=false for missing params object', () => {
-      // Act
-      const result = validateSendMessageParams(null);
+    test('should throw ValidationError for missing params object', () => {
+      // Act & Assert
+      expect(() => validateSendMessageParams(null))
+        .toThrow(ValidationError);
 
-      // Assert
-      expect(result).toEqual({
-        valid: false,
-        error: 'Parameters must be provided as an object'
-      });
+      expect(() => validateSendMessageParams(null))
+        .toThrow('Parameters must be provided as an object');
     });
 
     // Test 4: Missing required string parameter
-    test('should return valid=false for missing required string parameter', () => {
+    test('should throw ValidationError for missing required string parameter', () => {
       // Arrange - missing brokerUrl
       const params = {
         vpnName: 'default',
@@ -66,18 +59,16 @@ describe('validators', () => {
         isQueue: true
       };
 
-      // Act
-      const result = validateSendMessageParams(params);
+      // Act & Assert
+      expect(() => validateSendMessageParams(params))
+        .toThrow(ValidationError);
 
-      // Assert
-      expect(result).toEqual({
-        valid: false,
-        error: "Parameter 'brokerUrl' is required and must be a string"
-      });
+      expect(() => validateSendMessageParams(params))
+        .toThrow("Parameter 'brokerUrl' is required and must be a string");
     });
 
     // Test 5: Non-string required parameter
-    test('should return valid=false for non-string required parameter', () => {
+    test('should throw ValidationError for non-string required parameter', () => {
       // Arrange - vpnName is a number
       const params = {
         brokerUrl: 'ws://localhost:8000',
@@ -89,18 +80,16 @@ describe('validators', () => {
         isQueue: true
       };
 
-      // Act
-      const result = validateSendMessageParams(params);
+      // Act & Assert
+      expect(() => validateSendMessageParams(params))
+        .toThrow(ValidationError);
 
-      // Assert
-      expect(result).toEqual({
-        valid: false,
-        error: "Parameter 'vpnName' is required and must be a string"
-      });
+      expect(() => validateSendMessageParams(params))
+        .toThrow("Parameter 'vpnName' is required and must be a string");
     });
 
     // Test 6: Missing payload
-    test('should return valid=false for missing payload', () => {
+    test('should throw ValidationError for missing payload', () => {
       // Arrange
       const params = {
         brokerUrl: 'ws://localhost:8000',
@@ -111,18 +100,16 @@ describe('validators', () => {
         isQueue: true
       };
 
-      // Act
-      const result = validateSendMessageParams(params);
+      // Act & Assert
+      expect(() => validateSendMessageParams(params))
+        .toThrow(ValidationError);
 
-      // Assert
-      expect(result).toEqual({
-        valid: false,
-        error: "Parameter 'payload' is required"
-      });
+      expect(() => validateSendMessageParams(params))
+        .toThrow("Parameter 'payload' is required");
     });
 
     // Test 7: Missing isQueue
-    test('should return valid=false for missing isQueue', () => {
+    test('should throw ValidationError for missing isQueue', () => {
       // Arrange
       const params = {
         brokerUrl: 'ws://localhost:8000',
@@ -133,18 +120,16 @@ describe('validators', () => {
         payload: 'test message'
       };
 
-      // Act
-      const result = validateSendMessageParams(params);
+      // Act & Assert
+      expect(() => validateSendMessageParams(params))
+        .toThrow(ValidationError);
 
-      // Assert
-      expect(result).toEqual({
-        valid: false,
-        error: "Parameter 'isQueue' is required and must be a boolean"
-      });
+      expect(() => validateSendMessageParams(params))
+        .toThrow("Parameter 'isQueue' is required and must be a boolean");
     });
 
     // Test 8: Non-boolean isQueue
-    test('should return valid=false for non-boolean isQueue', () => {
+    test('should throw ValidationError for non-boolean isQueue', () => {
       // Arrange
       const params = {
         brokerUrl: 'ws://localhost:8000',
@@ -156,14 +141,12 @@ describe('validators', () => {
         isQueue: 'true' // string instead of boolean
       };
 
-      // Act
-      const result = validateSendMessageParams(params);
+      // Act & Assert
+      expect(() => validateSendMessageParams(params))
+        .toThrow(ValidationError);
 
-      // Assert
-      expect(result).toEqual({
-        valid: false,
-        error: "Parameter 'isQueue' is required and must be a boolean"
-      });
+      expect(() => validateSendMessageParams(params))
+        .toThrow("Parameter 'isQueue' is required and must be a boolean");
     });
   });
 });
