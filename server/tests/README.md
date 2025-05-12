@@ -87,6 +87,42 @@ To run the tests with custom configuration, set the environment variables before
 TEST_BROKER_URL=ws://my-solace-broker:8008 TEST_VPN_NAME=my-vpn npm test
 ```
 
+## ESM Mocking Approach
+
+The tests use Jest's `unstable_mockModule` to mock the Solace SDK (solclientjs). This approach:
+
+1. Creates a complete mock of the Solace SDK with all necessary methods and properties
+2. Simulates connection events like `UP_NOTICE` and `CONNECT_FAILED_ERROR`
+3. Allows testing of all code paths without requiring a real Solace broker
+4. Ensures tests are deterministic, fast, and reliable
+
+Example of the mocking approach:
+
+```javascript
+jest.unstable_mockModule('solclientjs', () => {
+  // Create mock session, message, and other Solace objects
+  const mockSession = {
+    on: jest.fn((event, callback) => {
+      if (event === 'UP_NOTICE') {
+        callback();
+      }
+      return mockSession;
+    }),
+    connect: jest.fn(),
+    // ... other methods
+  };
+
+  // Return the mock implementation
+  const mock = {
+    SolclientFactory: {
+      // ... factory methods
+    },
+    // ... other properties
+  };
+  return { ...mock, default: mock };
+});
+```
+
 ## Support
 
 For questions or issues related to testing configuration, please contact: mic.devuse@gmail.com

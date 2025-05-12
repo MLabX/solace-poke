@@ -84,6 +84,7 @@ This document outlines the requirements for the Solace Message Sender Applicatio
 | 2023-11-15 | NFR13          | Added port conflict handling requirement | Team |
 | 2023-11-15 | NFR17-NFR20    | Added testing requirements          | Team   |
 | 2024-05-08 | NFR21          | Added requirement for ESM mocking of Solace SDK in tests | AI/Team |
+| 2024-05-09 | NFR14-NFR16    | Implemented code refactoring for improved maintainability, separation of concerns, and documentation | AI/Team |
 
 ## Support Contact
 

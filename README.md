@@ -17,12 +17,18 @@ A full-stack application for sending messages to a Solace PubSub+ broker. This a
 - Success/error message display
 - Server health status display with actual port information
 - Environment variable configuration via Vite
+- Modular component architecture with:
+  - Reusable UI components
+  - Custom React hooks for form handling and API calls
+  - TypeScript interfaces for type safety
 
 ### Backend (Node.js + Express)
 - RESTful API endpoint for sending messages to Solace
 - Health-check endpoint for monitoring server status
 - Integration with Solace JavaScript SDK (solclientjs)
-- Error handling and logging
+- Comprehensive error handling with custom error classes
+- Modular route organization
+- Input validation with detailed error messages
 - Environment variable configuration
 - Dynamic port allocation with fallback
 
